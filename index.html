@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Analytics Dashboard | Plan vs Actuals with Risk Assessment</title>
+    
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Chart.js for Data Visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --light-bg: #f5f7fa;
+            --dark-text: #2c3e50;
+            --border-color: #e1e8ed;
+            --plan-color: #3498db;
+            --actual-color: #2ecc71;
+            --forecast-color: #e74c3c;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        /* Header Styles */
+        .dashboard-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .header-left .subtitle {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .header-right {
+            text-align: right;
+        }
+
+        .date-badge, .last-updated {
+            font-size: 14px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        .date-badge i, .last-updated i {
+            font-size: 16px;
+        }
+
+        /* KPI Cards */
+        .kpi-section {
+            padding: 30px;
+            background: var(--light-bg);
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .kpi-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+        }
+
+        .kpi-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .kpi-header h3 {
+            font-size: 16px;
+            color: #7f8c8d;
+            font-weight: 500;
+        }
+
+        .kpi-header i {
+            font-size: 20px;
+            color: var(--primary-color);
+        }
+
+        .kpi-values {
+            margin-bottom: 15px;
+        }
+
+        .actual-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--dark-text);
+        }
+
+        .plan-value {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin: 5px 0;
+        }
+
+        .variance {
+            font-size: 14px;
+            font-weight: 500;
+            padding: 5px 0;
+        }
+
+        .variance.negative {
+            color: var(--danger-color);
+        }
+
+        .variance.positive {
+            color: var(--success-color);
+        }
+
+        .risk-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .risk-label {
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+
+        .risk-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .risk-badge.high {
+            background: #fee2e2;
+            color: var(--danger-color);
+        }
+
+        .risk-badge.medium {
+            background: #fff3cd;
+            color: var(--warning-color);
+        }
+
+        .risk-badge.low {
+            background: #d4edda;
+            color: var(--success-color);
+        }
+
+        /* Charts Section */
+        .charts-section {
+            padding: 30px;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            height: 400px;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .chart-header h2 {
+            font-size: 18px;
+            color: var(--dark-text);
+        }
+
+        .legend {
+            display: flex;
+            gap: 20px;
+        }
+
+        .legend-item {
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .legend-item.plan i {
+            color: var(--plan-color);
+        }
+
+        .legend-item.actual i {
+            color: var(--actual-color);
+        }
+
+        .legend-item.forecast i {
+            color: var(--forecast-color);
+        }
+
+        /* Risk Section */
+        .risk-section {
+            padding: 30px;
+            background: var(--light-bg);
+        }
+
+        .risk-section h2 {
+            font-size: 22px;
+            color: var(--dark-text);
+            margin-bottom: 20px;
+        }
+
+        .risk-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .risk-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .risk-card h3 {
+            font-size: 18px;
+            color: var(--dark-text);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .trend-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .trend-label {
+            color: #7f8c8d;
+        }
+
+        .trend-value.negative {
+            color: var(--danger-color);
+            font-weight: 600;
+        }
+
+        .trend-summary {
+            margin-top: 15px;
+            padding: 12px;
+            background: #fff3cd;
+            border-radius: 8px;
+            color: #856404;
+            font-weight: 500;
+        }
+
+        /* Risks List */
+        .risks-list {
+            list-style: none;
+        }
+
+        .risk-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+
+        .risk-item.high i {
+            color: var(--danger-color);
+        }
+
+        .risk-item.medium i {
+            color: var(--warning-color);
+        }
+
+        .risk-item.low i {
+            color: var(--success-color);
+        }
+
+        .risk-detail p {
+            font-size: 13px;
+            color: #7f8c8d;
+            margin-top: 3px;
+        }
+
+        /* Recommendations */
+        .rec-list {
+            list-style: none;
+        }
+
+        .rec-list li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            padding: 8px;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+
+        .rec-list i {
+            color: var(--success-color);
+        }
+
+        /* Monthly Table */
+        .monthly-breakdown {
+            padding: 30px;
+        }
+
+        .monthly-breakdown h2 {
+            font-size: 22px;
+            color: var(--dark-text);
+            margin-bottom: 20px;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .financial-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        .financial-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            font-weight: 500;
+        }
+
+        .financial-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .financial-table tbody tr:hover {
+            background: var(--light-bg);
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-block;
+        }
+
+        .status-badge.on-track {
+            background: #d4edda;
+            color: var(--success-color);
+        }
+
+        .status-badge.at-risk {
+            background: #fff3cd;
+            color: var(--warning-color);
+        }
+
+        .status-badge.off-track {
+            background: #fee2e2;
+            color: var(--danger-color);
+        }
+
+        /* Metrics Section */
+        .metrics-section {
+            padding: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .metrics-section h2 {
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .metric-card {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 20px;
+            color: white;
+        }
+
+        .metric-card h4 {
+            font-size: 14px;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+
+        .metric-value {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .metric-value.warning {
+            color: var(--warning-color);
+        }
+
+        .metric-value.high {
+            color: var(--danger-color);
+        }
+
+        .metric-trend {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .metric-trend i {
+            margin-right: 3px;
+        }
+
+        .metric-sub {
+            font-size: 12px;
+            opacity: 0.7;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-header {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+            }
+            
+            .header-right {
+                text-align: center;
+            }
+            
+            .date-badge, .last-updated {
+                justify-content: center;
+            }
+            
+            .kpi-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .risk-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .kpi-card, .chart-container, .risk-card, .metric-card {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .positive {
+            color: var(--success-color);
+        }
+
+        .negative {
+            color: var(--danger-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <div class="header-left">
+                <h1>Financial Performance Dashboard</h1>
+                <p class="subtitle">Plan vs Actuals Analysis with Forward-Looking Risk Assessment</p>
+            </div>
+            <div class="header-right">
+                <div class="date-badge">
+                    <i class="far fa-calendar-alt"></i>
+                    <span id="currentDate"></span>
+                </div>
+                <div class="last-updated">
+                    <i class="far fa-clock"></i>
+                    <span>Last Updated: Q4 2024</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- KPI Cards Section -->
+        <section class="kpi-section">
+            <div class="kpi-grid">
+                <!-- Revenue KPI -->
+                <div class="kpi-card revenue-card">
+                    <div class="kpi-header">
+                        <h3>Revenue</h3>
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="kpi-values">
+                        <div class="actual-value">$12.4M</div>
+                        <div class="plan-value">Plan: $15.0M</div>
+                        <div class="variance negative">
+                            <i class="fas fa-arrow-down"></i> -17.3% vs Plan
+                        </div>
+                    </div>
+                    <div class="risk-indicator">
+                        <span class="risk-label">Risk Level:</span>
+                        <span class="risk-badge high">High</span>
+                    </div>
+                </div>
+
+                <!-- Gross Margin KPI -->
+                <div class="kpi-card margin-card">
+                    <div class="kpi-header">
+                        <h3>Gross Margin</h3>
+                        <i class="fas fa-percent"></i>
+                    </div>
+                    <div class="kpi-values">
+                        <div class="actual-value">68.5%</div>
+                        <div class="plan-value">Plan: 72.0%</div>
+                        <div class="variance negative">
+                            <i class="fas fa-arrow-down"></i> -3.5pp vs Plan
+                        </div>
+                    </div>
+                    <div class="risk-indicator">
+                        <span class="risk-label">Risk Level:</span>
+                        <span class="risk-badge medium">Medium</span>
+                    </div>
+                </div>
+
+                <!-- EBITDA KPI -->
+                <div class="kpi-card ebitda-card">
+                    <div class="kpi-header">
+                        <h3>EBITDA Margin</h3>
+                        <i class="fas fa-chart-pie"></i>
+                    </div>
+                    <div class="kpi-values">
+                        <div class="actual-value">24.3%</div>
+                        <div class="plan-value">Plan: 28.0%</div>
+                        <div class="variance negative">
+                            <i class="fas fa-arrow-down"></i> -3.7pp vs Plan
+                        </div>
+                    </div>
+                    <div class="risk-indicator">
+                        <span class="risk-label">Risk Level:</span>
+                        <span class="risk-badge medium">Medium</span>
+                    </div>
+                </div>
+
+                <!-- Cash Flow KPI -->
+                <div class="kpi-card cash-card">
+                    <div class="kpi-header">
+                        <h3>Operating Cash Flow</h3>
+                        <i class="fas fa-coins"></i>
+                    </div>
+                    <div class="kpi-values">
+                        <div class="actual-value">$2.1M</div>
+                        <div class="plan-value">Plan: $3.2M</div>
+                        <div class="variance negative">
+                            <i class="fas fa-arrow-down"></i> -34.4% vs Plan
+                        </div>
+                    </div>
+                    <div class="risk-indicator">
+                        <span class="risk-label">Risk Level:</span>
+                        <span class="risk-badge high">High</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Charts Section -->
+        <section class="charts-section">
+            <div class="chart-container monthly-trend">
+                <div class="chart-header">
+                    <h2>Monthly Financial Performance: Plan vs Actual vs Forecast</h2>
+                    <div class="legend">
+                        <span class="legend-item plan"><i class="fas fa-circle"></i> Plan</span>
+                        <span class="legend-item actual"><i class="fas fa-circle"></i> Actual</span>
+                        <span class="legend-item forecast"><i class="fas fa-circle"></i> Forecast</span>
+                    </div>
+                </div>
+                <canvas id="monthlyChart"></canvas>
+            </div>
+
+            <div class="chart-container variance-analysis">
+                <h2>Monthly Variance Analysis</h2>
+                <canvas id="varianceChart"></canvas>
+            </div>
+        </section>
+
+        <!-- Risk Assessment Section -->
+        <section class="risk-section">
+            <h2>Risk Assessment & Recommendations</h2>
+            <div class="risk-grid">
+                <!-- Current Trend Analysis -->
+                <div class="risk-card trend-analysis">
+                    <h3><i class="fas fa-chart-line"></i> Current Trend Analysis</h3>
+                    <div class="trend-content">
+                        <div class="trend-item">
+                            <span class="trend-label">Revenue Growth Rate:</span>
+                            <span class="trend-value negative">-2.3% MoM</span>
+                        </div>
+                        <div class="trend-item">
+                            <span class="trend-label">Margin Erosion Rate:</span>
+                            <span class="trend-value negative">-0.8% MoM</span>
+                        </div>
+                        <div class="trend-item">
+                            <span class="trend-label">Cash Burn Rate:</span>
+                            <span class="trend-value negative">$450K/month</span>
+                        </div>
+                    </div>
+                    <p class="trend-summary">
+                        At current run rate, revenue will miss annual target by 22% 
+                        ($44M vs plan of $56M)
+                    </p>
+                </div>
+
+                <!-- Key Risks -->
+                <div class="risk-card key-risks">
+                    <h3><i class="fas fa-exclamation-triangle"></i> Key Risks</h3>
+                    <ul class="risks-list">
+                        <li class="risk-item high">
+                            <i class="fas fa-circle"></i>
+                            <div class="risk-detail">
+                                <strong>Liquidity Risk</strong>
+                                <p>Cash runway reduced to 6 months at current burn rate</p>
+                            </div>
+                        </li>
+                        <li class="risk-item medium">
+                            <i class="fas fa-circle"></i>
+                            <div class="risk-detail">
+                                <strong>Margin Compression</strong>
+                                <p>Gross margin trending below threshold for profitability</p>
+                            </div>
+                        </li>
+                        <li class="risk-item medium">
+                            <i class="fas fa-circle"></i>
+                            <div class="risk-detail">
+                                <strong>Revenue Concentration</strong>
+                                <p>Top 3 customers represent 65% of revenue</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Recommendations -->
+                <div class="risk-card recommendations">
+                    <h3><i class="fas fa-lightbulb"></i> Strategic Recommendations</h3>
+                    <ul class="rec-list">
+                        <li>
+                            <i class="fas fa-check-circle"></i>
+                            <span>Implement cost reduction program targeting $2M annual savings</span>
+                        </li>
+                        <li>
+                            <i class="fas fa-check-circle"></i>
+                            <span>Diversify customer base - reduce top 3 concentration to <50%</span>
+                        </li>
+                        <li>
+                            <i class="fas fa-check-circle"></i>
+                            <span>Optimize working capital - target 15-day DSO reduction</span>
+                        </li>
+                        <li>
+                            <i class="fas fa-check-circle"></i>
+                            <span>Review pricing strategy to protect margins</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Detailed Monthly Breakdown -->
+        <section class="monthly-breakdown">
+            <h2>Monthly Breakdown & Forecast</h2>
+            <div class="table-container">
+                <table class="financial-table">
+                    <thead>
+                        <tr>
+                            <th>Month</th>
+                            <th>Plan ($M)</th>
+                            <th>Actual ($M)</th>
+                            <th>Forecast ($M)</th>
+                            <th>Variance ($M)</th>
+                            <th>Variance %</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="monthlyDataBody">
+                        <!-- Data will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Risk Metrics Dashboard -->
+        <section class="metrics-section">
+            <h2>Forward-Looking Risk Metrics</h2>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <h4>Probability of Missing Plan</h4>
+                    <div class="metric-value high">87%</div>
+                    <div class="metric-trend">
+                        <i class="fas fa-arrow-up"></i> +12% from last quarter
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <h4>Expected Shortfall</h4>
+                    <div class="metric-value">$12.5M</div>
+                    <div class="metric-sub">At 95% confidence level</div>
+                </div>
+                <div class="metric-card">
+                    <h4>Runway (months)</h4>
+                    <div class="metric-value warning">6.2</div>
+                    <div class="metric-sub">Below target of 12 months</div>
+                </div>
+                <div class="metric-card">
+                    <h4>Forecast Accuracy</h4>
+                    <div class="metric-value" id="forecastAccuracy">82%</div>
+                    <div class="metric-sub">Last 3 months average</div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Set current date
+        document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+
+        // Monthly data
+        const monthlyData = [
+            { month: 'Jan', plan: 4.2, actual: 3.8, forecast: 3.6 },
+            { month: 'Feb', plan: 4.5, actual: 4.1, forecast: 3.9 },
+            { month: 'Mar', plan: 4.8, actual: 4.3, forecast: 4.1 },
+            { month: 'Apr', plan: 5.0, actual: 4.5, forecast: 4.3 },
+            { month: 'May', plan: 5.2, actual: 4.7, forecast: 4.4 },
+            { month: 'Jun', plan: 5.4, actual: 4.9, forecast: 4.6 },
+            { month: 'Jul', plan: 5.6, actual: 5.1, forecast: 4.8 },
+            { month: 'Aug', plan: 5.8, actual: 5.2, forecast: 4.9 },
+            { month: 'Sep', plan: 6.0, actual: 5.4, forecast: 5.1 },
+            { month: 'Oct', plan: 6.2, actual: 5.5, forecast: 5.2 },
+            { month: 'Nov', plan: 6.4, actual: 5.7, forecast: 5.3 },
+            { month: 'Dec', plan: 6.8, actual: 6.0, forecast: 5.5 }
+        ];
+
+        // Monthly Chart
+        const ctx = document.getElementById('monthlyChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: monthlyData.map(d => d.month),
+                datasets: [
+                    {
+                        label: 'Plan',
+                        data: monthlyData.map(d => d.plan),
+                        borderColor: '#3498db',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        borderWidth: 3,
+                        tension: 0.1,
+                        fill: false
+                    },
+                    {
+                        label: 'Actual',
+                        data: monthlyData.map(d => d.actual),
+                        borderColor: '#2ecc71',
+                        backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                        borderWidth: 3,
+                        tension: 0.1,
+                        fill: false
+                    },
+                    {
+                        label: 'Forecast',
+                        data: monthlyData.map(d => d.forecast),
+                        borderColor: '#e74c3c',
+                        backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                        borderWidth: 3,
+                        borderDash: [5, 5],
+                        tension: 0.1,
+                        fill: false
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.dataset.label}: $${context.raw}M`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Revenue ($ Millions)'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Variance Chart
+        const varianceCtx = document.getElementById('varianceChart').getContext('2d');
+        const variances = monthlyData.map(d => ({
+            month: d.month,
+            variance: ((d.actual - d.plan) / d.plan * 100).toFixed(1)
+        }));
+
+        new Chart(varianceCtx, {
+            type: 'bar',
+            data: {
+                labels: variances.map(v => v.month),
+                datasets: [
+                    {
+                        label: 'Variance %',
+                        data: variances.map(v => v.variance),
+                        backgroundColor: variances.map(v => 
+                            parseFloat(v.variance) >= 0 ? '#27ae60' : '#e74c3c'
+                        ),
+                        borderWidth: 0
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `Variance: ${context.raw}%`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Variance %'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Populate monthly table
+        const tableBody = document.getElementById('monthlyDataBody');
+        monthlyData.forEach(item => {
+            const variance = (item.actual - item.plan).toFixed(2);
+            const variancePercent = ((item.actual - item.plan) / item.plan * 100).toFixed(1);
+            const status = getStatus(variancePercent);
+            
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${item.month}</td>
+                <td>$${item.plan.toFixed(1)}M</td>
+                <td>$${item.actual.toFixed(1)}M</td>
+                <td>$${item.forecast.toFixed(1)}M</td>
+                <td class="${parseFloat(variance) >= 0 ? 'positive' : 'negative'}">$${Math.abs(parseFloat(variance)).toFixed(2)}M</td>
+                <td class="${parseFloat(variancePercent) >= 0 ? 'positive' : 'negative'}">${variancePercent}%</td>
+                <td><span class="status-badge ${status.class}">${status.text}</span></td>
+            `;
+            tableBody.appendChild(row);
+        });
+
+        function getStatus(variancePercent) {
+            const variance = parseFloat(variancePercent);
+            if (variance >= -5) {
+                return { class: 'on-track', text: 'On Track' };
+            } else if (variance >= -15) {
+                return { class: 'at-risk', text: 'At Risk' };
+            } else {
+                return { class: 'off-track', text: 'Off Track' };
+            }
+        }
+
+        // Calculate forecast accuracy
+        const lastThreeActuals = monthlyData.slice(-3).map(d => d.actual);
+        const lastThreeForecasts = monthlyData.slice(-3).map(d => d.forecast);
+        const accuracy = calculateForecastAccuracy(lastThreeActuals, lastThreeForecasts);
+        document.getElementById('forecastAccuracy').textContent = accuracy + '%';
+
+        function calculateForecastAccuracy(actuals, forecasts) {
+            const errors = actuals.map((actual, index) => 
+                Math.abs((actual - forecasts[index]) / actual * 100)
+            );
+            const avgError = errors.reduce((a, b) => a + b, 0) / errors.length;
+            return (100 - avgError).toFixed(1);
+        }
+
+        // Auto-refresh simulation
+        let lastUpdated = new Date();
+        setInterval(() => {
+            lastUpdated = new Date();
+            document.querySelector('.last-updated span').textContent = 
+                `Last Updated: ${lastUpdated.toLocaleTimeString()}`;
+        }, 30000); // Refresh every 30 seconds
+
+        // Add print functionality (Ctrl+P)
+        document.addEventListener('keydown', e => {
+            if (e.ctrlKey && e.key === 'p') {
+                e.preventDefault();
+                window.print();
+            }
+        });
+    </script>
+</body>
+</html>
